@@ -20,11 +20,11 @@ interface TipoMaestriaDao {
 
     // Insertar nuevo tipo_maestria
     @Insert(onConflict = OnConflictStrategy.REPLACE)
-    suspend fun insert(tipo_maestria: TipoMaestria): Long
+    suspend fun insert(tipoMaestria: TipoMaestria): Long
 
     // Actualizar tipo_maestria
     @Update
-    suspend fun update(tipo_maestria: TipoMaestria)
+    suspend fun update(tipoMaestria: TipoMaestria)
 
     // Eliminar lógicamente (marca con *)
     @Query("UPDATE tipo_maestria SET estadoRegistro = '*' WHERE codigo = :codigo")

@@ -1,62 +1,57 @@
-package com.example.gestordemaestrias
+package com.example.gestordemaestrias.ui.viewmodel
 
-import android.os.Bundle
-import androidx.activity.ComponentActivity
-import androidx.activity.compose.setContent
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Surface
+import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
-import com.example.gestordemaestrias.data.database.AppDatabase
 import com.example.gestordemaestrias.data.repository.*
-import com.example.gestordemaestrias.ui.navigation.AppNavigation
-import com.example.gestordemaestrias.ui.theme.GestorDeMaestriasTheme
-import com.example.gestordemaestrias.ui.viewmodel.*
 
-class MainActivity : ComponentActivity() {
-
-    private lateinit var campusViewModel: CampusViewModel
-    private lateinit var facultadViewModel: FacultadViewModel
-    private lateinit var tipoMaestriaViewModel: TipoMaestriaViewModel
-    private lateinit var maestriaViewModel: MaestriaViewModel
-
-    override fun onCreate(savedInstanceState: Bundle?) {
-        super.onCreate(savedInstanceState)
-
-        // Inicializar base de datos
-        val database = AppDatabase.getDatabase(applicationContext)
-
-        // Crear repositorios
-        val campusRepository = CampusRepository(database.campusDao())
-        val facultadRepository = FacultadRepository(database.facultadDao())
-        val tipoMaestriaRepository = TipoMaestriaRepository(database.tipoMaestriaDao())
-        val maestriaRepository = MaestriaRepository(database.maestriaDao())
-
-        // Crear ViewModels usando Factory
-        val campusFactory = CampusViewModelFactory(campusRepository)
-        campusViewModel = ViewModelProvider(this, campusFactory)[CampusViewModel::class.java]
-
-        val facultadFactory = FacultadViewModelFactory(facultadRepository)
-        facultadViewModel = ViewModelProvider(this, facultadFactory)[FacultadViewModel::class.java]
-
-        val tipoMaestriaFactory = TipoMaestriaViewModelFactory(tipoMaestriaRepository)
-        tipoMaestriaViewModel = ViewModelProvider(this, tipoMaestriaFactory)[TipoMaestriaViewModel::class.java]
-
-        val maestriaFactory = MaestriaViewModelFactory(maestriaRepository)
-        maestriaViewModel = ViewModelProvider(this, maestriaFactory)[MaestriaViewModel::class.java]
-
-        setContent {
-            GestorDeMaestriasTheme {
-                Surface(
-                    color = MaterialTheme.colorScheme.background
-                ) {
-                    AppNavigation(
-                        campusViewModel = campusViewModel,
-                        facultadViewModel = facultadViewModel,
-                        tipoMaestriaViewModel = tipoMaestriaViewModel,
-                        maestriaViewModel = maestriaViewModel
-                    )
-                }
-            }
+/**
+ * Factory para crear ViewModels con dependencias
+ */
+class CampusViewModelFactory(
+    private val repository: CampusRepository
+) : ViewModelProvider.Factory {
+    @Suppress("UNCHECKED_CAST")
+    override fun <T : ViewModel> create(modelClass: Class<T>): T {
+        if (modelClass.isAssignableFrom(CampusViewModel::class.java)) {
+            return CampusViewModel(repository) as T
         }
+        throw IllegalArgumentException("Unknown ViewModel class")
     }
+}
+
+class FacultadViewModelFactory(
+    private val repository: FacultadRepository
+) : ViewModelProvider.Factory {
+    @Suppress("UNCHECKED_CAST")
+    override fun <T : ViewModel> create(modelClass: Class<T>): T {
+        if (modelClass.isAssignableFrom(FacultadViewModel::class.java)) {
+            return FacultadViewModel(repository) as T
+        }
+        throw IllegalArgumentException("Unknown ViewModel class")
+    }
+}
+
+class TipoMaestriaViewModelFactory(
+    private val repository: TipoMaestriaRepository
+) : ViewModelProvider.Factory {
+    @Suppress("UNCHECKED_CAST")
+    override fun <T : ViewModel> create(modelClass: Class<T>): T {
+        if (modelClass.isAssignableFrom(TipoMaestriaViewModel::class.java)) {
+            return TipoMaestriaViewModel(repository) as T
+        }
+        throw IllegalArgumentException("Unknown ViewModel class")
+    }
+}
+
+class MaestriaViewModelFactory(
+    private val repository: MaestriaRepository
+) : ViewModelProvider.Factory {
+    @Suppress("UNCHECKED_CAST")
+    override fun <T : ViewModel> create(modelClass: Class<T>): T {
+        if (modelClass.isAssignableFrom(MaestriaViewModel::class.java)) {
+            return MaestriaViewModel(repository) as T
+        }
+        throw IllegalArgumentException("Unknown ViewModel class")
+    }
+
 }
