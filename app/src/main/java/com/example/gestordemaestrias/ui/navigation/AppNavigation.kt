@@ -175,19 +175,19 @@ fun AppNavigation(
         }
 
         // Maestria - Lista
-        composable(Screen.CampusList.route) {
-            CampusListScreen(
-                viewModel = campusViewModel,
+        composable(Screen.MaestriaList.route) {
+            MaestriaListScreen(
+                viewModel = maestriaViewModel,
                 onNavigateToForm = { codigo ->
-                    navController.navigate(Screen.CampusForm.createRoute(codigo))
+                    navController.navigate(Screen.MaestriaForm.createRoute(codigo))
                 },
                 onNavigateBack = { navController.navigateUp() }
             )
         }
 
-        // Campus - Formulario
+        // Maestria - Formulario
         composable(
-            route = Screen.CampusForm.route,
+            route = Screen.MaestriaForm.route,
             arguments = listOf(
                 navArgument("codigo") {
                     type = NavType.StringType
@@ -198,9 +198,9 @@ fun AppNavigation(
             val codigoString = backStackEntry.arguments?.getString("codigo")
             val codigo = if (codigoString == "null") null else codigoString?.toIntOrNull()
 
-            CampusFormScreen(
-                viewModel = campusViewModel,
-                campusCodigo = codigo,
+            MaestriaFormScreen(
+                viewModel = maestriaViewModel,
+                maestriaCodigo = codigo,
                 onNavigateBack = { navController.navigateUp() }
             )
         }
