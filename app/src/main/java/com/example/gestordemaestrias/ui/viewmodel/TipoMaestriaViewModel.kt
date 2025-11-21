@@ -70,6 +70,28 @@ class TipoMaestriaViewModel(private val repository: TipoMaestriaRepository) : Vi
         }
     }
 
+    fun inactivateTipoMaestria(codigo: Int) {
+        viewModelScope.launch {
+            try {
+                repository.inactivate(codigo)
+                _message.value = "Tipo de Maestria inactivada"
+            } catch (e: Exception) {
+                _message.value = "Error: ${e.message}"
+            }
+        }
+    }
+
+    fun reactivateTipoMaestria(codigo: Int) {
+        viewModelScope.launch {
+            try {
+                repository.reactivate(codigo)
+                _message.value = "Tipo de Maestria reactivada"
+            } catch (e: Exception) {
+                _message.value = "Error: ${e.message}"
+            }
+        }
+    }
+
     suspend fun getTipoMaestriaByCodigo(codigo: Int) = repository.getTipoMaestriaByCodigo(codigo)
 
     fun clearMessage() { _message.value = null }

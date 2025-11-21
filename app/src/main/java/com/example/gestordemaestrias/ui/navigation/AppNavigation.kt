@@ -9,6 +9,9 @@ import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
 import com.example.gestordemaestrias.ui.screens.MenuPrincipalScreen
 import com.example.gestordemaestrias.ui.screens.campus.*
+import com.example.gestordemaestrias.ui.screens.facultad.*
+import com.example.gestordemaestrias.ui.screens.tipomaestria.*
+import com.example.gestordemaestrias.ui.screens.maestria.*
 import com.example.gestordemaestrias.ui.viewmodel.*
 
 /**
@@ -109,5 +112,97 @@ fun AppNavigation(
 
         // TODO: Agregar las rutas similares para Facultad, TipoMaestria y Maestria
         // siguiendo el mismo patrón
+        // Facultad - Lista
+        composable(Screen.FacultadList.route) {
+            FacultadListScreen(
+                viewModel = facultadViewModel,
+                onNavigateToForm = { codigo ->
+                    navController.navigate(Screen.FacultadForm.createRoute(codigo))
+                },
+                onNavigateBack = { navController.navigateUp() }
+            )
+        }
+
+        // Facultad - Formulario
+        composable(
+            route = Screen.FacultadForm.route,
+            arguments = listOf(
+                navArgument("codigo") {
+                    type = NavType.StringType
+                    nullable = true
+                }
+            )
+        ) { backStackEntry ->
+            val codigoString = backStackEntry.arguments?.getString("codigo")
+            val codigo = if (codigoString == "null") null else codigoString?.toIntOrNull()
+
+            FacultadFormScreen(
+                viewModel = facultadViewModel,
+                facultadCodigo = codigo,
+                onNavigateBack = { navController.navigateUp() }
+            )
+        }
+
+        // Tipo Maestria - Lista
+        composable(Screen.TipoMaestriaList.route) {
+            TipoMaestriaListScreen(
+                viewModel = tipoMaestriaViewModel,
+                onNavigateToForm = { codigo ->
+                    navController.navigate(Screen.TipoMaestriaForm.createRoute(codigo))
+                },
+                onNavigateBack = { navController.navigateUp() }
+            )
+        }
+
+        // Tipo Maestria - Formulario
+        composable(
+            route = Screen.TipoMaestriaForm.route,
+            arguments = listOf(
+                navArgument("codigo") {
+                    type = NavType.StringType
+                    nullable = true
+                }
+            )
+        ) { backStackEntry ->
+            val codigoString = backStackEntry.arguments?.getString("codigo")
+            val codigo = if (codigoString == "null") null else codigoString?.toIntOrNull()
+
+            TipoMaestriaFormScreen(
+                viewModel = tipoMaestriaViewModel,
+                tipoMaestriaCodigo = codigo,
+                onNavigateBack = { navController.navigateUp() }
+            )
+        }
+
+        // Maestria - Lista
+        composable(Screen.CampusList.route) {
+            CampusListScreen(
+                viewModel = campusViewModel,
+                onNavigateToForm = { codigo ->
+                    navController.navigate(Screen.CampusForm.createRoute(codigo))
+                },
+                onNavigateBack = { navController.navigateUp() }
+            )
+        }
+
+        // Campus - Formulario
+        composable(
+            route = Screen.CampusForm.route,
+            arguments = listOf(
+                navArgument("codigo") {
+                    type = NavType.StringType
+                    nullable = true
+                }
+            )
+        ) { backStackEntry ->
+            val codigoString = backStackEntry.arguments?.getString("codigo")
+            val codigo = if (codigoString == "null") null else codigoString?.toIntOrNull()
+
+            CampusFormScreen(
+                viewModel = campusViewModel,
+                campusCodigo = codigo,
+                onNavigateBack = { navController.navigateUp() }
+            )
+        }
     }
 }
