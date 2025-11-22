@@ -1,5 +1,10 @@
 package com.example.gestordemaestrias.ui.screens.campus
 
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.expandVertically
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.shrinkVertically
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
@@ -16,6 +21,11 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.example.gestordemaestrias.data.entity.Campus
 import com.example.gestordemaestrias.ui.viewmodel.CampusViewModel
+import com.example.gestordemaestrias.ui.components.ActionDialog
+import com.example.gestordemaestrias.ui.components.SimpleInfoCard
+import com.example.gestordemaestrias.ui.components.SimpleFilterPanel
+import com.example.gestordemaestrias.ui.components.SimpleEmptyState
+
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -24,30 +34,95 @@ fun CampusListScreen(
     onNavigateToForm: (Int?) -> Unit,
     onNavigateBack: () -> Unit
 ) {
-    val campusList by viewModel.allCampus.collectAsState()
-    val searchQuery by viewModel.searchQuery.collectAsState()
-    val searchResults by viewModel.searchResults.collectAsState()
-    val message by viewModel.message.collectAsState()
-
-    var showDeleteDialog by remember { mutableStateOf(false) }
+    // ============= ESTADO =============
+    var searchQuery by remember { mutableStateOf("") }
+    val searchResults by viewModel.searchResults.collectAsState() //
+    var showFilters by remember { mutableStateOf(false) }
     var selectedCampus by remember { mutableStateOf<Campus?>(null) }
     var showActionDialog by remember { mutableStateOf(false) }
+    var showDeleteDialog by remember { mutableStateOf(false) }
+
+    // Estados de filtros
+    var filterEstado by remember { mutableStateOf<String?>(null) }
+
+    // ============= DATOS =============
+    val campusList by viewModel.allCampus.collectAsState()
+    val message by viewModel.message.collectAsState()
+
+    // ============= APLICAR FILTROS ============
+    val filteredCampus = remember(
+        campusList,
+        searchQuery,
+        filterEstado
+    ){
+        campusList.filter { campus ->
+            // Filtro por búsqueda
+            val matchesSearch = if (searchQuery.isBlank()) {
+                true
+            } else {
+                campus.nombre.contains(searchQuery, ignoreCase = true)
+            }
+            // Filtro por estado
+            val matchesEstado = filterEstado?.let {
+                campus.estadoRegistro == it
+            } ?: true
+
+            matchesSearch && matchesEstado
+        }
+    }
+
+    // Contador de Filtros activos
+    val activeFiltersCount = listOfNotNull(
+        filterEstado
+    ).size
+
 
     // Mostrar mensaje si existe
+    val snackbarHostState = remember { SnackbarHostState() }
     LaunchedEffect(message) {
         message?.let {
             // El mensaje se muestra en el Snackbar
+            snackbarHostState.showSnackbar(it)
             viewModel.clearMessage()
         }
     }
 
+    // ======= UI =========
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("Gestión de Campus") },
+                title = {
+                    Column {
+                        Text("Campus")
+                        if (activeFiltersCount > 0 ) {
+                            Text(
+                                text = "$activeFiltersCount filtros(s) activo(s)",
+                                style = MaterialTheme.typography.labelSmall,
+                                color = MaterialTheme.colorScheme.primary
+                            )
+                        }
+                    }
+                },
                 navigationIcon = {
                     IconButton(onClick = onNavigateBack) {
                         Icon(Icons.Default.ArrowBack, "Volver")
+                    }
+                },
+                actions = {
+                    // Botón de filtros con badge
+                    BadgedBox(
+                        badge = {
+                            if (activeFiltersCount > 0) {
+                                Badge { Text("$activeFiltersCount") }
+                            }
+                        }
+                    ) {
+                        IconButton(onClick = { showFilters = !showFilters }) {
+                            Icon(
+                                if (showFilters) Icons.Default.FilterAltOff else Icons.Default.FilterAlt,
+                                "Filtros"
+                            )
+                        }
                     }
                 },
                 colors = TopAppBarDefaults.topAppBarColors(
@@ -56,12 +131,13 @@ fun CampusListScreen(
             )
         },
         floatingActionButton = {
-            FloatingActionButton(
-                onClick = { onNavigateToForm(null) }
-            ) {
-                Icon(Icons.Default.Add, "Agregar Campus")
-            }
-        }
+            ExtendedFloatingActionButton(
+                onClick = { onNavigateToForm(null) },
+                icon = { Icon(Icons.Default.Add, null) },
+                text = { Text("Nuevo Campus")}
+            )
+        },
+        snackbarHost = {SnackbarHost(snackbarHostState)}
     ) { padding ->
         Column(
             modifier = Modifier
@@ -69,49 +145,74 @@ fun CampusListScreen(
                 .padding(padding)
                 .padding(16.dp)
         ) {
+            // ========== PANEL DE FILTROS ==========
+            AnimatedVisibility(
+                visible = showFilters,
+                enter = expandVertically() + fadeIn(),
+                exit = shrinkVertically() + fadeOut()
+            ) {
+                SimpleFilterPanel(
+                    selectedEstado = filterEstado,
+                    onEstadoSelected = { filterEstado = it },
+                    onClearFilters = { filterEstado = null }
+                )
+            }
+
             // Barra de búsqueda
             OutlinedTextField(
                 value = searchQuery,
-                onValueChange = { viewModel.updateSearchQuery(it) },
+                onValueChange = { searchQuery = it },
                 label = { Text("Buscar campus") },
+                placeholder = { Text("Por nombre de campus")},
                 leadingIcon = { Icon(Icons.Default.Search, null) },
                 trailingIcon = {
                     if (searchQuery.isNotEmpty()) {
-                        IconButton(onClick = { viewModel.updateSearchQuery("") }) {
+                        IconButton(onClick = { searchQuery = "" }) {
                             Icon(Icons.Default.Clear, "Limpiar")
                         }
                     }
                 },
-                modifier = Modifier.fillMaxWidth(),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 16.dp, vertical = 8.dp),
                 singleLine = true
             )
 
-            Spacer(modifier = Modifier.height(16.dp))
+            //Spacer(modifier = Modifier.height(16.dp))
 
-            // Lista de campus
-            val displayList = if (searchQuery.isBlank()) campusList else searchResults
+            // ======== RESULTADOS ===============
+            //val displayList = if (searchQuery.isBlank()) campusList else searchResults
 
-            if (displayList.isEmpty()) {
-                Box(
-                    modifier = Modifier.fillMaxSize(),
-                    contentAlignment = Alignment.Center
+            if (filteredCampus.isEmpty()) {
+                SimpleEmptyState(
+                    searchQuery = searchQuery,
+                    hasFilters = activeFiltersCount > 0,
+                    moduleName = "campus"
+                )
+            } else {
+                // Header con contador
+                Surface(
+                    color = MaterialTheme.colorScheme.surfaceVariant,
+                    modifier = Modifier.fillMaxWidth()
                 ) {
                     Text(
-                        text = if (searchQuery.isBlank())
-                            "No hay campus registrados"
-                        else
-                            "No se encontraron resultados",
-                        style = MaterialTheme.typography.bodyLarge,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                        text = "${filteredCampus.size} maestría(s) encontrada(s)",
+                        modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp),
+                        style = MaterialTheme.typography.labelLarge
                     )
                 }
-            } else {
                 LazyColumn(
+                    contentPadding = PaddingValues(16.dp),
                     verticalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
-                    items(displayList, key = { it.codigo }) { campus ->
-                        CampusCard(
-                            campus = campus,
+                    items(
+                        items = filteredCampus,
+                        key = { it.codigo }
+                    ) { campus ->
+                        SimpleInfoCard(
+                            nombre = campus.nombre,
+                            codigo = campus.codigo,
+                            estadoRegistro = campus.estadoRegistro,
                             onClick = {
                                 selectedCampus = campus
                                 showActionDialog = true
@@ -125,66 +226,25 @@ fun CampusListScreen(
 
     // Diálogo de acciones
     if (showActionDialog && selectedCampus != null) {
-        AlertDialog(
-            onDismissRequest = { showActionDialog = false },
-            title = { Text("Acciones - ${selectedCampus!!.nombre}") },
-            text = {
-                Column {
-                    TextButton(
-                        onClick = {
-                            onNavigateToForm(selectedCampus!!.codigo)
-                            showActionDialog = false
-                        },
-                        modifier = Modifier.fillMaxWidth()
-                    ) {
-                        Icon(Icons.Default.Edit, null)
-                        Spacer(Modifier.width(8.dp))
-                        Text("Modificar")
-                    }
-
-                    if (selectedCampus!!.estadoRegistro == "A") {
-                        TextButton(
-                            onClick = {
-                                viewModel.inactivateCampus(selectedCampus!!.codigo)
-                                showActionDialog = false
-                            },
-                            modifier = Modifier.fillMaxWidth()
-                        ) {
-                            Icon(Icons.Default.Close, null)
-                            Spacer(Modifier.width(8.dp))
-                            Text("Inactivar")
-                        }
-                    } else if (selectedCampus!!.estadoRegistro == "I") {
-                        TextButton(
-                            onClick = {
-                                viewModel.reactivateCampus(selectedCampus!!.codigo)
-                                showActionDialog = false
-                            },
-                            modifier = Modifier.fillMaxWidth()
-                        ) {
-                            Icon(Icons.Default.Check, null)
-                            Spacer(Modifier.width(8.dp))
-                            Text("Reactivar")
-                        }
-                    }
-
-                    TextButton(
-                        onClick = {
-                            showActionDialog = false
-                            showDeleteDialog = true
-                        },
-                        modifier = Modifier.fillMaxWidth()
-                    ) {
-                        Icon(Icons.Default.Delete, null, tint = Color.Red)
-                        Spacer(Modifier.width(8.dp))
-                        Text("Eliminar", color = Color.Red)
-                    }
-                }
+        ActionDialog(
+            name = selectedCampus!!.nombre,
+            estado = selectedCampus!!.estadoRegistro,
+            onDismiss = { showActionDialog = false },
+            onEdit = {
+                onNavigateToForm(selectedCampus!!.codigo)
+                showActionDialog = false
             },
-            confirmButton = {
-                TextButton(onClick = { showActionDialog = false }) {
-                    Text("Cancelar")
-                }
+            onDelete = {
+                showActionDialog = false
+                showDeleteDialog = true
+            },
+            onInactivate = {
+                viewModel.inactivateCampus(selectedCampus!!.codigo)
+                showActionDialog = false
+            },
+            onReactivate = {
+                viewModel.reactivateCampus(selectedCampus!!.codigo)
+                showActionDialog = false
             }
         )
     }
@@ -193,6 +253,7 @@ fun CampusListScreen(
     if (showDeleteDialog && selectedCampus != null) {
         AlertDialog(
             onDismissRequest = { showDeleteDialog = false },
+            icon = { Icon(Icons.Default.Warning, null, tint = MaterialTheme.colorScheme.error) },
             title = { Text("Confirmar eliminación") },
             text = { Text("¿Está seguro de eliminar '${selectedCampus!!.nombre}'?") },
             confirmButton = {
@@ -203,7 +264,7 @@ fun CampusListScreen(
                         selectedCampus = null
                     }
                 ) {
-                    Text("Eliminar", color = Color.Red)
+                    Text("Eliminar", color = MaterialTheme.colorScheme.error)
                 }
             },
             dismissButton = {
@@ -215,50 +276,3 @@ fun CampusListScreen(
     }
 }
 
-@Composable
-fun CampusCard(
-    campus: Campus,
-    onClick: () -> Unit
-) {
-    Card(
-        modifier = Modifier
-            .fillMaxWidth()
-            .clickable(onClick = onClick),
-        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
-    ) {
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(16.dp),
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            Column(modifier = Modifier.weight(1f)) {
-                Text(
-                    text = campus.nombre,
-                    style = MaterialTheme.typography.titleMedium,
-                    fontWeight = FontWeight.Bold
-                )
-                Text(
-                    text = "Código: ${campus.codigo}",
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                )
-            }
-
-            // Indicador de estado
-            Box(
-                modifier = Modifier
-                    .size(12.dp)
-                    .background(
-                        color = when (campus.estadoRegistro) {
-                            "A" -> Color.Green
-                            "I" -> Color.Gray
-                            else -> Color.Red
-                        },
-                        shape = MaterialTheme.shapes.small
-                    )
-            )
-        }
-    }
-}

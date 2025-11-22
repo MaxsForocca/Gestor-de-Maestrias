@@ -178,6 +178,9 @@ fun AppNavigation(
         composable(Screen.MaestriaList.route) {
             MaestriaListScreen(
                 viewModel = maestriaViewModel,
+                campusViewModel = campusViewModel,
+                facultadViewModel = facultadViewModel,
+                tipoMaestriaViewModel = tipoMaestriaViewModel,
                 onNavigateToForm = { codigo ->
                     navController.navigate(Screen.MaestriaForm.createRoute(codigo))
                 },
@@ -199,7 +202,10 @@ fun AppNavigation(
             val codigo = if (codigoString == "null") null else codigoString?.toIntOrNull()
 
             MaestriaFormScreen(
-                viewModel = maestriaViewModel,
+                maestriaViewModel = maestriaViewModel,
+                campusViewModel = campusViewModel,
+                facultadViewModel = facultadViewModel,
+                tipoMaestriaViewModel = tipoMaestriaViewModel,
                 maestriaCodigo = codigo,
                 onNavigateBack = { navController.navigateUp() }
             )

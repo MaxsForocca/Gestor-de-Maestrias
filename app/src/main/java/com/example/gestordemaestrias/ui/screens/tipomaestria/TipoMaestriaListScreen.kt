@@ -1,5 +1,10 @@
 package com.example.gestordemaestrias.ui.screens.tipomaestria
 
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.expandVertically
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.shrinkVertically
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
@@ -9,7 +14,6 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -17,6 +21,11 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.example.gestordemaestrias.data.entity.TipoMaestria
 import com.example.gestordemaestrias.ui.viewmodel.TipoMaestriaViewModel
+import com.example.gestordemaestrias.ui.components.ActionDialog
+import com.example.gestordemaestrias.ui.components.SimpleInfoCard
+import com.example.gestordemaestrias.ui.components.SimpleFilterPanel
+import com.example.gestordemaestrias.ui.components.SimpleEmptyState
+
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -25,30 +34,95 @@ fun TipoMaestriaListScreen(
     onNavigateToForm: (Int?) -> Unit,
     onNavigateBack: () -> Unit
 ) {
-    val tipoMaestriaList by viewModel.allTipoMaestria.collectAsState()
-    val searchQuery by viewModel.searchQuery.collectAsState()
-    val searchResults by viewModel.searchResults.collectAsState()
-    val message by viewModel.message.collectAsState()
-
-    var showDeleteDialog by remember { mutableStateOf(false) }
+    // ============= ESTADO =============
+    var searchQuery by remember { mutableStateOf("") }
+    val searchResults by viewModel.searchResults.collectAsState() //
+    var showFilters by remember { mutableStateOf(false) }
     var selectedTipoMaestria by remember { mutableStateOf<TipoMaestria?>(null) }
     var showActionDialog by remember { mutableStateOf(false) }
+    var showDeleteDialog by remember { mutableStateOf(false) }
+
+    // Estados de filtros
+    var filterEstado by remember { mutableStateOf<String?>(null) }
+
+    // ============= DATOS =============
+    val tipoMaestriaList by viewModel.allTipoMaestria.collectAsState()
+    val message by viewModel.message.collectAsState()
+
+    // ============= APLICAR FILTROS ============
+    val filteredTipoMaestria = remember(
+        tipoMaestriaList,
+        searchQuery,
+        filterEstado
+    ){
+        tipoMaestriaList.filter { tipoMaestria ->
+            // Filtro por búsqueda
+            val matchesSearch = if (searchQuery.isBlank()) {
+                true
+            } else {
+                tipoMaestria.nombre.contains(searchQuery, ignoreCase = true)
+            }
+            // Filtro por estado
+            val matchesEstado = filterEstado?.let {
+                tipoMaestria.estadoRegistro == it
+            } ?: true
+
+            matchesSearch && matchesEstado
+        }
+    }
+
+    // Contador de Filtros activos
+    val activeFiltersCount = listOfNotNull(
+        filterEstado
+    ).size
+
 
     // Mostrar mensaje si existe
+    val snackbarHostState = remember { SnackbarHostState() }
     LaunchedEffect(message) {
         message?.let {
             // El mensaje se muestra en el Snackbar
+            snackbarHostState.showSnackbar(it)
             viewModel.clearMessage()
         }
     }
 
+    // ======= UI =========
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("Gestión de Tipo de Maestria") },
+                title = {
+                    Column {
+                        Text("Tipo de Maestria")
+                        if (activeFiltersCount > 0 ) {
+                            Text(
+                                text = "$activeFiltersCount filtros(s) activo(s)",
+                                style = MaterialTheme.typography.labelSmall,
+                                color = MaterialTheme.colorScheme.primary
+                            )
+                        }
+                    }
+                },
                 navigationIcon = {
                     IconButton(onClick = onNavigateBack) {
                         Icon(Icons.Default.ArrowBack, "Volver")
+                    }
+                },
+                actions = {
+                    // Botón de filtros con badge
+                    BadgedBox(
+                        badge = {
+                            if (activeFiltersCount > 0) {
+                                Badge { Text("$activeFiltersCount") }
+                            }
+                        }
+                    ) {
+                        IconButton(onClick = { showFilters = !showFilters }) {
+                            Icon(
+                                if (showFilters) Icons.Default.FilterAltOff else Icons.Default.FilterAlt,
+                                "Filtros"
+                            )
+                        }
                     }
                 },
                 colors = TopAppBarDefaults.topAppBarColors(
@@ -57,12 +131,13 @@ fun TipoMaestriaListScreen(
             )
         },
         floatingActionButton = {
-            FloatingActionButton(
-                onClick = { onNavigateToForm(null) }
-            ) {
-                Icon(Icons.Default.Add, "Agregar Tipo de Maestria")
-            }
-        }
+            ExtendedFloatingActionButton(
+                onClick = { onNavigateToForm(null) },
+                icon = { Icon(Icons.Default.Add, null) },
+                text = { Text("Nuevo Cmapus")}
+            )
+        },
+        snackbarHost = {SnackbarHost(snackbarHostState)}
     ) { padding ->
         Column(
             modifier = Modifier
@@ -70,49 +145,74 @@ fun TipoMaestriaListScreen(
                 .padding(padding)
                 .padding(16.dp)
         ) {
+            // ========== PANEL DE FILTROS ==========
+            AnimatedVisibility(
+                visible = showFilters,
+                enter = expandVertically() + fadeIn(),
+                exit = shrinkVertically() + fadeOut()
+            ) {
+                SimpleFilterPanel(
+                    selectedEstado = filterEstado,
+                    onEstadoSelected = { filterEstado = it },
+                    onClearFilters = { filterEstado = null }
+                )
+            }
+
             // Barra de búsqueda
             OutlinedTextField(
                 value = searchQuery,
-                onValueChange = { viewModel.updateSearchQuery(it) },
-                label = { Text("Buscar Tipo de Maestria") },
+                onValueChange = { searchQuery = it },
+                label = { Text("Buscar tipo maestria") },
+                placeholder = { Text("Por nombre de tipo de maestria")},
                 leadingIcon = { Icon(Icons.Default.Search, null) },
                 trailingIcon = {
                     if (searchQuery.isNotEmpty()) {
-                        IconButton(onClick = { viewModel.updateSearchQuery("") }) {
+                        IconButton(onClick = { searchQuery = "" }) {
                             Icon(Icons.Default.Clear, "Limpiar")
                         }
                     }
                 },
-                modifier = Modifier.fillMaxWidth(),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 16.dp, vertical = 8.dp),
                 singleLine = true
             )
 
-            Spacer(modifier = Modifier.height(16.dp))
+            //Spacer(modifier = Modifier.height(16.dp))
 
-            // Lista de Tipo de Maestria
-            val displayList = if (searchQuery.isBlank()) tipoMaestriaList else searchResults
+            // ======== RESULTADOS ===============
+            //val displayList = if (searchQuery.isBlank()) tipoMaestriaList else searchResults
 
-            if (displayList.isEmpty()) {
-                Box(
-                    modifier = Modifier.fillMaxSize(),
-                    contentAlignment = Alignment.Center
+            if (filteredTipoMaestria.isEmpty()) {
+                SimpleEmptyState(
+                    searchQuery = searchQuery,
+                    hasFilters = activeFiltersCount > 0,
+                    moduleName = "tipo de maestria"
+                )
+            } else {
+                // Header con contador
+                Surface(
+                    color = MaterialTheme.colorScheme.surfaceVariant,
+                    modifier = Modifier.fillMaxWidth()
                 ) {
                     Text(
-                        text = if (searchQuery.isBlank())
-                            "No hay tipos de maestrias registradas"
-                        else
-                            "No se encontraron resultados",
-                        style = MaterialTheme.typography.bodyLarge,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                        text = "${filteredTipoMaestria.size} maestría(s) encontrada(s)",
+                        modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp),
+                        style = MaterialTheme.typography.labelLarge
                     )
                 }
-            } else {
                 LazyColumn(
+                    contentPadding = PaddingValues(16.dp),
                     verticalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
-                    items(displayList, key = { it.codigo }) { tipoMaestria ->
-                        TipoMaestriaCard(
-                            tipoMaestria = tipoMaestria,
+                    items(
+                        items = filteredTipoMaestria,
+                        key = { it.codigo }
+                    ) { tipoMaestria ->
+                        SimpleInfoCard(
+                            nombre = tipoMaestria.nombre,
+                            codigo = tipoMaestria.codigo,
+                            estadoRegistro = tipoMaestria.estadoRegistro,
                             onClick = {
                                 selectedTipoMaestria = tipoMaestria
                                 showActionDialog = true
@@ -126,66 +226,25 @@ fun TipoMaestriaListScreen(
 
     // Diálogo de acciones
     if (showActionDialog && selectedTipoMaestria != null) {
-        AlertDialog(
-            onDismissRequest = { showActionDialog = false },
-            title = { Text("Acciones - ${selectedTipoMaestria!!.nombre}") },
-            text = {
-                Column {
-                    TextButton(
-                        onClick = {
-                            onNavigateToForm(selectedTipoMaestria!!.codigo)
-                            showActionDialog = false
-                        },
-                        modifier = Modifier.fillMaxWidth()
-                    ) {
-                        Icon(Icons.Default.Edit, null)
-                        Spacer(Modifier.width(8.dp))
-                        Text("Modificar")
-                    }
-
-                    if (selectedTipoMaestria!!.estadoRegistro == "A") {
-                        TextButton(
-                            onClick = {
-                                viewModel.inactivateTipoMaestria(selectedTipoMaestria!!.codigo)
-                                showActionDialog = false
-                            },
-                            modifier = Modifier.fillMaxWidth()
-                        ) {
-                            Icon(Icons.Default.Close, null)
-                            Spacer(Modifier.width(8.dp))
-                            Text("Inactivar")
-                        }
-                    } else if (selectedTipoMaestria!!.estadoRegistro == "I") {
-                        TextButton(
-                            onClick = {
-                                viewModel.reactivateTipoMaestria(selectedTipoMaestria!!.codigo)
-                                showActionDialog = false
-                            },
-                            modifier = Modifier.fillMaxWidth()
-                        ) {
-                            Icon(Icons.Default.Check, null)
-                            Spacer(Modifier.width(8.dp))
-                            Text("Reactivar")
-                        }
-                    }
-
-                    TextButton(
-                        onClick = {
-                            showActionDialog = false
-                            showDeleteDialog = true
-                        },
-                        modifier = Modifier.fillMaxWidth()
-                    ) {
-                        Icon(Icons.Default.Delete, null, tint = Color.Red)
-                        Spacer(Modifier.width(8.dp))
-                        Text("Eliminar", color = Color.Red)
-                    }
-                }
+        ActionDialog(
+            name = selectedTipoMaestria!!.nombre,
+            estado = selectedTipoMaestria!!.estadoRegistro,
+            onDismiss = { showActionDialog = false },
+            onEdit = {
+                onNavigateToForm(selectedTipoMaestria!!.codigo)
+                showActionDialog = false
             },
-            confirmButton = {
-                TextButton(onClick = { showActionDialog = false }) {
-                    Text("Cancelar")
-                }
+            onDelete = {
+                showActionDialog = false
+                showDeleteDialog = true
+            },
+            onInactivate = {
+                viewModel.inactivateTipoMaestria(selectedTipoMaestria!!.codigo)
+                showActionDialog = false
+            },
+            onReactivate = {
+                viewModel.reactivateTipoMaestria(selectedTipoMaestria!!.codigo)
+                showActionDialog = false
             }
         )
     }
@@ -194,6 +253,7 @@ fun TipoMaestriaListScreen(
     if (showDeleteDialog && selectedTipoMaestria != null) {
         AlertDialog(
             onDismissRequest = { showDeleteDialog = false },
+            icon = { Icon(Icons.Default.Warning, null, tint = MaterialTheme.colorScheme.error) },
             title = { Text("Confirmar eliminación") },
             text = { Text("¿Está seguro de eliminar '${selectedTipoMaestria!!.nombre}'?") },
             confirmButton = {
@@ -204,7 +264,7 @@ fun TipoMaestriaListScreen(
                         selectedTipoMaestria = null
                     }
                 ) {
-                    Text("Eliminar", color = Color.Red)
+                    Text("Eliminar", color = MaterialTheme.colorScheme.error)
                 }
             },
             dismissButton = {
@@ -216,28 +276,3 @@ fun TipoMaestriaListScreen(
     }
 }
 
-@Composable
-fun TipoMaestriaCard(
-    tipoMaestria: TipoMaestria,
-    onClick: () -> Unit
-){
-    Card(
-        modifier = Modifier
-            .fillMaxWidth()
-            .clickable(onClick = onClick),
-        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
-    ) {
-        Column(modifier = Modifier.weight(1f)){
-            Text(
-                text = tipoMaestria.nombre,
-                style = MaterialTheme.typography.titleMedium,
-                fontWeight = FontWeight.Bold
-            )
-            Text(
-                text = "Codigo: ${tipoMaestria.codigo}",
-                style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
-            )
-        }
-    }
-}
