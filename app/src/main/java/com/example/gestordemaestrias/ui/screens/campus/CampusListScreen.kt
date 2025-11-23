@@ -5,8 +5,6 @@ import androidx.compose.animation.expandVertically
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.shrinkVertically
-import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -14,9 +12,8 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
-import androidx.compose.ui.Alignment
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.example.gestordemaestrias.data.entity.Campus
@@ -25,8 +22,8 @@ import com.example.gestordemaestrias.ui.components.ActionDialog
 import com.example.gestordemaestrias.ui.components.SimpleInfoCard
 import com.example.gestordemaestrias.ui.components.SimpleFilterPanel
 import com.example.gestordemaestrias.ui.components.SimpleEmptyState
-
-
+import com.example.gestordemaestrias.ui.components.SortOption
+import com.example.gestordemaestrias.ui.components.SimpleSortMenu
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun CampusListScreen(
@@ -38,12 +35,16 @@ fun CampusListScreen(
     var searchQuery by remember { mutableStateOf("") }
     val searchResults by viewModel.searchResults.collectAsState() //
     var showFilters by remember { mutableStateOf(false) }
+    var showSortMenu by remember { mutableStateOf(false) }
     var selectedCampus by remember { mutableStateOf<Campus?>(null) }
     var showActionDialog by remember { mutableStateOf(false) }
     var showDeleteDialog by remember { mutableStateOf(false) }
 
     // Estados de filtros
     var filterEstado by remember { mutableStateOf<String?>(null) }
+
+    // Estado de Ordenamiento
+    var sortOption by remember { mutableStateOf(SortOption.NOMBRE_ASC) }
 
     // ============= DATOS =============
     val campusList by viewModel.allCampus.collectAsState()
@@ -53,9 +54,10 @@ fun CampusListScreen(
     val filteredCampus = remember(
         campusList,
         searchQuery,
-        filterEstado
+        filterEstado,
+        sortOption
     ){
-        campusList.filter { campus ->
+        val filtered = campusList.filter { campus ->
             // Filtro por búsqueda
             val matchesSearch = if (searchQuery.isBlank()) {
                 true
@@ -68,6 +70,13 @@ fun CampusListScreen(
             } ?: true
 
             matchesSearch && matchesEstado
+        }
+
+        when (sortOption){
+            SortOption.CODIGO_ASC -> filtered.sortedBy { it.codigo }
+            SortOption.CODIGO_DESC -> filtered.sortedByDescending { it.codigo }
+            SortOption.NOMBRE_ASC -> filtered.sortedBy { it.nombre.lowercase() }
+            SortOption.NOMBRE_DESC -> filtered.sortedByDescending { it.nombre.lowercase() }
         }
     }
 
@@ -93,7 +102,10 @@ fun CampusListScreen(
             TopAppBar(
                 title = {
                     Column {
-                        Text("Campus")
+                        Text(
+                            "Campus",
+                            fontWeight = FontWeight.Bold
+                        )
                         if (activeFiltersCount > 0 ) {
                             Text(
                                 text = "$activeFiltersCount filtros(s) activo(s)",
@@ -109,6 +121,17 @@ fun CampusListScreen(
                     }
                 },
                 actions = {
+                    // Boton de ordenamiento
+                    IconButton(onClick = { showSortMenu = true}) {
+                        Icon(Icons.Default.Sort, "Ordenar")
+                    }
+                    // Menu de Ordenamiento
+                    SimpleSortMenu(
+                        expanded = showSortMenu,
+                        selectedOption = sortOption,
+                        onOptionSelected = {sortOption=it},
+                        onDismiss = {showSortMenu=false}
+                    )
                     // Botón de filtros con badge
                     BadgedBox(
                         badge = {
@@ -196,7 +219,7 @@ fun CampusListScreen(
                     modifier = Modifier.fillMaxWidth()
                 ) {
                     Text(
-                        text = "${filteredCampus.size} maestría(s) encontrada(s)",
+                        text = "${filteredCampus.size} campus encontrado(s)",
                         modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp),
                         style = MaterialTheme.typography.labelLarge
                     )

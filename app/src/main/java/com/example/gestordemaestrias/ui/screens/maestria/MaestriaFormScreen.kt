@@ -9,6 +9,7 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.example.gestordemaestrias.data.entity.*
 import com.example.gestordemaestrias.ui.viewmodel.*
@@ -93,7 +94,9 @@ fun MaestriaFormScreen(
         topBar = {
             TopAppBar(
                 title = {
-                    Text(if (isEditMode) "Editar Maestría" else "Nueva Maestría")
+                    Text(if (isEditMode) "Editar Maestría" else "Nueva Maestría",
+                        fontWeight = FontWeight.Bold
+                    )
                 },
                 navigationIcon = {
                     IconButton(onClick = onNavigateBack) {
@@ -143,7 +146,7 @@ fun MaestriaFormScreen(
                     value = nombre,
                     onValueChange = { nombre = it },
                     label = { Text("Nombre de la Maestría") },
-                    placeholder = { Text("Ej: Ingeniería de Sistemas") },
+                    placeholder = { Text("Ej: Maestría en Ciencias: Ingeniería Civil") },
                     leadingIcon = { Icon(Icons.Default.Edit, null) },
                     isError = nombreError != null && nombre.isNotBlank(),
                     supportingText = if (nombreError != null && nombre.isNotBlank()) {

@@ -8,6 +8,7 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.example.gestordemaestrias.ui.viewmodel.FacultadViewModel
 import kotlinx.coroutines.launch
@@ -51,7 +52,9 @@ fun FacultadFormScreen(
         topBar = {
             TopAppBar(
                 title = {
-                    Text(if (isEditMode) "Editar Facultad" else "Nueva Facultad")
+                    Text(if (isEditMode) "Editar Facultad" else "Nueva Facultad",
+                        fontWeight = FontWeight.Bold
+                    )
                 },
                 navigationIcon = {
                     IconButton(onClick = onNavigateBack) {
@@ -85,7 +88,7 @@ fun FacultadFormScreen(
                         value = nombre,
                         onValueChange = { nombre = it },
                         label = { Text("Nombre de la Facultad") },
-                        placeholder = { Text("Ej: Derecho") },
+                        placeholder = { Text("Ej: Facultad de Ciencias Contables y Financieras") },
                         modifier = Modifier.fillMaxWidth(),
                         singleLine = true
                     )

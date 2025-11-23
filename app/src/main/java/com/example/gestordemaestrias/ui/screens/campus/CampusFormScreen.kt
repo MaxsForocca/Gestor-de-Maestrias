@@ -8,6 +8,7 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.example.gestordemaestrias.ui.viewmodel.CampusViewModel
 import kotlinx.coroutines.launch
@@ -50,8 +51,10 @@ fun CampusFormScreen(
         topBar = {
             TopAppBar(
                 title = {
-                    Text(if (isEditMode) "Editar Campus" else "Nuevo Campus")
-                },
+                    Text(
+                        if (isEditMode) "Editar Campus" else "Nuevo Campus",
+                        fontWeight = FontWeight.Bold
+                    )},
                 navigationIcon = {
                     IconButton(onClick = onNavigateBack) {
                         Icon(Icons.Default.ArrowBack, "Volver")
@@ -84,7 +87,7 @@ fun CampusFormScreen(
                         value = nombre,
                         onValueChange = { nombre = it },
                         label = { Text("Nombre del Campus") },
-                        placeholder = { Text("Ej: Ingenierías") },
+                        placeholder = { Text("Ej: Biomedicas") },
                         modifier = Modifier.fillMaxWidth(),
                         singleLine = true
                     )

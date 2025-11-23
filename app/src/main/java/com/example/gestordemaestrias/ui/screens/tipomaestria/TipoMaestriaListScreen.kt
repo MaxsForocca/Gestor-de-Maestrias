@@ -25,6 +25,8 @@ import com.example.gestordemaestrias.ui.components.ActionDialog
 import com.example.gestordemaestrias.ui.components.SimpleInfoCard
 import com.example.gestordemaestrias.ui.components.SimpleFilterPanel
 import com.example.gestordemaestrias.ui.components.SimpleEmptyState
+import com.example.gestordemaestrias.ui.components.SimpleSortMenu
+import com.example.gestordemaestrias.ui.components.SortOption
 
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -38,12 +40,16 @@ fun TipoMaestriaListScreen(
     var searchQuery by remember { mutableStateOf("") }
     val searchResults by viewModel.searchResults.collectAsState() //
     var showFilters by remember { mutableStateOf(false) }
+    var showSortMenu by remember { mutableStateOf(false) }
     var selectedTipoMaestria by remember { mutableStateOf<TipoMaestria?>(null) }
     var showActionDialog by remember { mutableStateOf(false) }
     var showDeleteDialog by remember { mutableStateOf(false) }
 
     // Estados de filtros
     var filterEstado by remember { mutableStateOf<String?>(null) }
+
+    // Estado de Ordenamiento
+    var sortOption by remember { mutableStateOf(SortOption.NOMBRE_ASC) }
 
     // ============= DATOS =============
     val tipoMaestriaList by viewModel.allTipoMaestria.collectAsState()
@@ -53,9 +59,10 @@ fun TipoMaestriaListScreen(
     val filteredTipoMaestria = remember(
         tipoMaestriaList,
         searchQuery,
-        filterEstado
+        filterEstado,
+        sortOption
     ){
-        tipoMaestriaList.filter { tipoMaestria ->
+        val filtered = tipoMaestriaList.filter { tipoMaestria ->
             // Filtro por búsqueda
             val matchesSearch = if (searchQuery.isBlank()) {
                 true
@@ -68,6 +75,12 @@ fun TipoMaestriaListScreen(
             } ?: true
 
             matchesSearch && matchesEstado
+        }
+        when (sortOption){
+            SortOption.CODIGO_ASC -> filtered.sortedBy { it.codigo }
+            SortOption.CODIGO_DESC -> filtered.sortedByDescending { it.codigo }
+            SortOption.NOMBRE_ASC -> filtered.sortedBy { it.nombre.lowercase() }
+            SortOption.NOMBRE_DESC -> filtered.sortedByDescending { it.nombre.lowercase() }
         }
     }
 
@@ -93,7 +106,10 @@ fun TipoMaestriaListScreen(
             TopAppBar(
                 title = {
                     Column {
-                        Text("Tipo de Maestria")
+                        Text(
+                            "Tipo de Maestria",
+                            fontWeight = FontWeight.Bold
+                        )
                         if (activeFiltersCount > 0 ) {
                             Text(
                                 text = "$activeFiltersCount filtros(s) activo(s)",
@@ -109,6 +125,17 @@ fun TipoMaestriaListScreen(
                     }
                 },
                 actions = {
+                    // Boton de ordenamiento
+                    IconButton(onClick = { showSortMenu = true}) {
+                        Icon(Icons.Default.Sort, "Ordenar")
+                    }
+                    // Menu de Ordenamiento
+                    SimpleSortMenu(
+                        expanded = showSortMenu,
+                        selectedOption = sortOption,
+                        onOptionSelected = {sortOption=it},
+                        onDismiss = {showSortMenu=false}
+                    )
                     // Botón de filtros con badge
                     BadgedBox(
                         badge = {
@@ -196,7 +223,7 @@ fun TipoMaestriaListScreen(
                     modifier = Modifier.fillMaxWidth()
                 ) {
                     Text(
-                        text = "${filteredTipoMaestria.size} maestría(s) encontrada(s)",
+                        text = "${filteredTipoMaestria.size} tipo(s) de maestria(s) encontrada(s)",
                         modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp),
                         style = MaterialTheme.typography.labelLarge
                     )

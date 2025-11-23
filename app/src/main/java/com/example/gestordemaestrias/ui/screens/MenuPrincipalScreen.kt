@@ -21,8 +21,11 @@ fun MenuPrincipalScreen(
 ) {
     Scaffold(
         topBar = {
-            TopAppBar(
-                title = { Text("Gestor de Maestrías") },
+            CenterAlignedTopAppBar(
+                title = { Text(
+                    "Gestor de Maestrías",
+                    fontWeight = FontWeight.Bold
+                )},
                 colors = TopAppBarDefaults.topAppBarColors(
                     containerColor = MaterialTheme.colorScheme.primaryContainer
                 )

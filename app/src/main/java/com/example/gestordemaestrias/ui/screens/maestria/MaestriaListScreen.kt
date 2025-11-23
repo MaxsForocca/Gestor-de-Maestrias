@@ -24,6 +24,26 @@ import com.example.gestordemaestrias.data.dao.MaestriaConRelaciones
 import com.example.gestordemaestrias.ui.viewmodel.*
 import com.example.gestordemaestrias.ui.components.StatusChip
 import com.example.gestordemaestrias.ui.components.ActionDialog
+
+/**
+ * Opciones de ordenamiento para la lista de maestrías
+ */
+enum class SortOption(
+    val label: String,
+    val shortLabel: String,
+    val icon: androidx.compose.ui.graphics.vector.ImageVector
+) {
+    CODIGO_ASC("Código (Menor a Mayor)", "Código ↑", Icons.Default.ArrowUpward),
+    CODIGO_DESC("Código (Mayor a Menor)", "Código ↓", Icons.Default.ArrowDownward),
+    NOMBRE_ASC("Nombre (A-Z)", "Nombre A-Z", Icons.Default.SortByAlpha),
+    NOMBRE_DESC("Nombre (Z-A)", "Nombre Z-A", Icons.Default.SortByAlpha),
+    TIPO_ASC("Tipo (A-Z)", "Tipo A-Z", Icons.Default.Category),
+    TIPO_DESC("Tipo (Z-A)", "Tipo Z-A", Icons.Default.Category),
+    FACULTAD_ASC("Facultad (A-Z)", "Facultad A-Z", Icons.Default.AccountBalance),
+    FACULTAD_DESC("Facultad (Z-A)", "Facultad Z-A", Icons.Default.AccountBalance),
+    CAMPUS_ASC("Campus (A-Z)", "Campus A-Z", Icons.Default.LocationOn),
+    CAMPUS_DESC("Campus (Z-A)", "Campus Z-A", Icons.Default.LocationOn)
+}
 /**
  * Pantalla de lista de Maestrías con sistema de filtros avanzado
  * - Filtro por Tipo de Maestría
@@ -45,6 +65,7 @@ fun MaestriaListScreen(
     // ========== ESTADO ==========
     var searchQuery by remember { mutableStateOf("") }
     var showFilters by remember { mutableStateOf(false) }
+    var showSortMenu by remember { mutableStateOf(false) }
     var selectedAction by remember { mutableStateOf<MaestriaConRelaciones?>(null) }
     var showActionDialog by remember { mutableStateOf(false) }
     var showDeleteDialog by remember { mutableStateOf(false) }
@@ -54,6 +75,9 @@ fun MaestriaListScreen(
     var filterFacultad by remember { mutableStateOf<Int?>(null) }
     var filterCampus by remember { mutableStateOf<Int?>(null) }
     var filterEstado by remember { mutableStateOf<String?>(null) }
+
+    // Estado de Ordenamiento
+    var sortOption by remember { mutableStateOf(SortOption.NOMBRE_ASC) }
 
     // ========== DATOS ==========
     val allMaestrias by viewModel.allMaestrias.collectAsState()
@@ -71,9 +95,11 @@ fun MaestriaListScreen(
         filterTipoMaestria,
         filterFacultad,
         filterCampus,
-        filterEstado
+        filterEstado,
+        sortOption
     ) {
-        allMaestrias.filter { maestria ->
+        // Primero se filtra
+        val filtered = allMaestrias.filter { maestria ->
             // Filtro por búsqueda
             val matchesSearch = if (searchQuery.isBlank()) {
                 true
@@ -106,6 +132,20 @@ fun MaestriaListScreen(
 
             matchesSearch && matchesTipo && matchesFacultad && matchesCampus && matchesEstado
         }
+        // Luego se ordena
+        when (sortOption){
+            SortOption.CODIGO_ASC -> filtered.sortedBy { it.codigo }
+            SortOption.CODIGO_DESC -> filtered.sortedByDescending { it.codigo }
+            SortOption.NOMBRE_ASC -> filtered.sortedBy { it.nombre.lowercase() }
+            SortOption.NOMBRE_DESC -> filtered.sortedByDescending { it.nombre.lowercase() }
+            SortOption.TIPO_ASC -> filtered.sortedBy { it.tipoMaestriaNombre.lowercase() }
+            SortOption.TIPO_DESC -> filtered.sortedByDescending { it.tipoMaestriaNombre.lowercase() }
+            SortOption.FACULTAD_ASC -> filtered.sortedBy { it.facultadNombre.lowercase() }
+            SortOption.FACULTAD_DESC -> filtered.sortedByDescending { it.facultadNombre.lowercase() }
+            SortOption.CAMPUS_ASC -> filtered.sortedBy { it.campusNombre.lowercase() }
+            SortOption.CAMPUS_DESC -> filtered.sortedByDescending { it.campusNombre.lowercase() }
+
+        }
     }
 
     // Contador de filtros activos
@@ -132,7 +172,9 @@ fun MaestriaListScreen(
             TopAppBar(
                 title = {
                     Column {
-                        Text("Maestrías")
+                        Text("Maestrías",
+                            fontWeight = FontWeight.Bold
+                        )
                         if (activeFiltersCount > 0) {
                             Text(
                                 text = "$activeFiltersCount filtro(s) activo(s)",
@@ -148,6 +190,54 @@ fun MaestriaListScreen(
                     }
                 },
                 actions = {
+                    // Boton de ordenamiento
+                    IconButton(onClick = { showSortMenu = true}) {
+                        Icon(Icons.Default.Sort, "Ordenar")
+                    }
+                    // Menu de Ordenamiento
+                    DropdownMenu(
+                        expanded = showSortMenu,
+                        onDismissRequest = {showSortMenu = false}
+                    ) {
+                        Text(
+                            text = "Ordenar por:",
+                            modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp),
+                            style = MaterialTheme.typography.labelSmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                        HorizontalDivider()
+                        SortOption.entries.forEach { option ->
+                            DropdownMenuItem(
+                                text = {
+                                    Row(
+                                        horizontalArrangement = Arrangement.spacedBy(8.dp),
+                                        verticalAlignment = Alignment.CenterVertically
+                                    ) {
+                                        Icon(
+                                            imageVector = option.icon,
+                                            contentDescription = null,
+                                            modifier = Modifier.size(20.dp)
+                                        )
+                                        Text(option.label)
+                                    }
+                                },
+                                onClick = {
+                                    sortOption = option
+                                    showSortMenu = false
+                                },
+                                leadingIcon = {
+                                    if (sortOption == option) {
+                                        Icon(
+                                            Icons.Default.Check,
+                                            null,
+                                            tint = MaterialTheme.colorScheme.primary
+                                        )
+                                    }
+                                }
+                            )
+                        }
+                    }
+
                     // Botón de filtros con badge
                     BadgedBox(
                         badge = {

@@ -1,6 +1,5 @@
 package com.example.gestordemaestrias.ui.screens.tipomaestria
 
-import com.example.gestordemaestrias.ui.viewmodel.TipoMaestriaViewModel
 
 import androidx.compose.foundation.layout.*
 import androidx.compose.material.icons.Icons
@@ -10,8 +9,9 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import com.example.gestordemaestrias.ui.viewmodel.FacultadViewModel
+import com.example.gestordemaestrias.ui.viewmodel.TipoMaestriaViewModel
 import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -52,7 +52,9 @@ fun TipoMaestriaFormScreen(
         topBar = {
             TopAppBar(
                 title = {
-                    Text(if (isEditMode) "Editar Tipo de Maestria" else "Nuevo Tipo de Maestria")
+                    Text(if (isEditMode) "Editar Tipo de Maestria" else "Nuevo Tipo de Maestria",
+                        fontWeight = FontWeight.Bold
+                    )
                 },
                 navigationIcon = {
                     IconButton(onClick = onNavigateBack) {

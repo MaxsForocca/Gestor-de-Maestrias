@@ -76,26 +76,22 @@ abstract class AppDatabase : RoomDatabase() {
             // Insertar Campus
             val campusIngenierias = Campus(nombre = "Ingenierías")
             val campusSociales = Campus(nombre = "Sociales")
-            val campusSalud = Campus(nombre = "Salud")
 
             val campusId1 = campusDao.insert(campusIngenierias).toInt()
             val campusId2 = campusDao.insert(campusSociales).toInt()
-            val campusId3 = campusDao.insert(campusSalud).toInt()
 
             // Insertar Facultades
-            val fips = Facultad(nombre = "FIPS")
-            val educacion = Facultad(nombre = "Educación")
-            val medicina = Facultad(nombre = "Medicina")
-            val derecho = Facultad(nombre = "Derecho")
+            val fips = Facultad(nombre = "Facultad de Ingeniería de Producción y Servicios")
+            val cienciasHistoricos = Facultad(nombre = "Facultad de Ciencias Histórico Sociales")
+            val cienciasNaturales = Facultad(nombre = "Facultad de Ciencias Naturales y Formales")
 
             val facultadId1 = facultadDao.insert(fips).toInt()
-            val facultadId2 = facultadDao.insert(educacion).toInt()
-            val facultadId3 = facultadDao.insert(medicina).toInt()
-            val facultadId4 = facultadDao.insert(derecho).toInt()
+            val facultadId2 = facultadDao.insert(cienciasHistoricos).toInt()
+            val facultadId3 = facultadDao.insert(cienciasNaturales).toInt()
 
             // Insertar Tipos de Maestría
-            val investigacion = TipoMaestria(nombre = "Investigación")
-            val profesional = TipoMaestria(nombre = "Profesional")
+            val investigacion = TipoMaestria(nombre = "Maestria Profesional")
+            val profesional = TipoMaestria(nombre = "Maestria Academica")
 
             val tipoId1 = tipoMaestriaDao.insert(investigacion).toInt()
             val tipoId2 = tipoMaestriaDao.insert(profesional).toInt()
@@ -103,7 +99,7 @@ abstract class AppDatabase : RoomDatabase() {
             // Insertar Maestrías de ejemplo
             maestriaDao.insert(
                 Maestria(
-                    nombre = "Ingeniería de Sistemas",
+                    nombre = "Maestría en Ciencia de Datos",
                     tipoMaestriaCodigo = tipoId1,
                     facultadCodigo = facultadId1,
                     campusCodigo = campusId1
@@ -112,19 +108,10 @@ abstract class AppDatabase : RoomDatabase() {
 
             maestriaDao.insert(
                 Maestria(
-                    nombre = "Gerencia de Sistemas",
+                    nombre = "Maestría en Ciencias: con mención en Comunicación",
                     tipoMaestriaCodigo = tipoId2,
-                    facultadCodigo = facultadId1,
-                    campusCodigo = campusId1
-                )
-            )
-
-            maestriaDao.insert(
-                Maestria(
-                    nombre = "Salud Pública",
-                    tipoMaestriaCodigo = tipoId1,
-                    facultadCodigo = facultadId3,
-                    campusCodigo = campusId3
+                    facultadCodigo = facultadId2,
+                    campusCodigo = campusId2
                 )
             )
         }
