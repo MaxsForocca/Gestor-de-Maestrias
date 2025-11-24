@@ -392,7 +392,7 @@ Al instalar la app por primera vez, se crean automáticamente:
 
 ### Equipo de Desarrollo
 
-- **Subgrupo 34** - *Desarrollo Móvil - Negocios Electrónicos*
+- **Subgrupo 34** - *Lab Grupo D - Negocios Electrónicos*
 
 ---
 
