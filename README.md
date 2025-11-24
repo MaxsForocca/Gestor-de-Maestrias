@@ -10,16 +10,16 @@ Aplicación móvil Android para la gestión maestrías. Desarrollada con tecnolo
 
 ## Tabla de Contenidos
 
-- [Características](#-características)
-- [Arquitectura](#-arquitectura)
-- [Tecnologías](#-tecnologías)
-- [Estructura del Proyecto](#-estructura-del-proyecto)
-- [Requisitos](#-requisitos)
-- [Instalación](#-instalación)
-- [Uso](#-uso)
-- [Base de Datos](#-base-de-datos)
-- [Funcionalidades](#-funcionalidades)
-- [Autores](#-autores)
+- [Características](#características)
+- [Arquitectura](#arquitectura)
+- [Tecnologías](#tecnologías)
+- [Estructura del Proyecto](#estructura-del-proyecto)
+- [Requisitos](#requisitos)
+- [Instalación](#instalación)
+- [Uso](#uso)
+- [Base de Datos](#base-de-datos)
+- [Funcionalidades](#funcionalidades)
+- [Autores](#autores)
 
 ## Características
 
@@ -416,6 +416,6 @@ Al instalar la app por primera vez, se crean automáticamente:
 
 **Desarrollado por el Subgrupo 34 - Lab Negocios Electronicos Grupo D**
 
-[⬆ Volver arriba](#-gestor-de-maestrías)
+[⬆ Volver arriba](#gestor-de-maestrías)
 
 </div>
